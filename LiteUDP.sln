@@ -1,0 +1,23 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPAsyncClient", "UDPAsyncClient\UDPAsyncClient.csproj", "{0D755FDF-7DEC-486A-88D1-0C1682099E64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPAsyncServer", "UDPAsyncServer\UDPAsyncServer.csproj", "{E452EF29-15A1-49F0-9365-919F0696655E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0D755FDF-7DEC-486A-88D1-0C1682099E64}.Debug|x86.ActiveCfg = Debug|x86
+		{0D755FDF-7DEC-486A-88D1-0C1682099E64}.Debug|x86.Build.0 = Debug|x86
+		{0D755FDF-7DEC-486A-88D1-0C1682099E64}.Release|x86.ActiveCfg = Release|x86
+		{0D755FDF-7DEC-486A-88D1-0C1682099E64}.Release|x86.Build.0 = Release|x86
+		{E452EF29-15A1-49F0-9365-919F0696655E}.Debug|x86.ActiveCfg = Debug|x86
+		{E452EF29-15A1-49F0-9365-919F0696655E}.Debug|x86.Build.0 = Debug|x86
+		{E452EF29-15A1-49F0-9365-919F0696655E}.Release|x86.ActiveCfg = Release|x86
+		{E452EF29-15A1-49F0-9365-919F0696655E}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+EndGlobal
