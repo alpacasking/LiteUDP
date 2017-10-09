@@ -5,4 +5,4 @@ You can just download the source code and complie it,then input any string you l
 1.Use SocketAsyncEventArgs for asynchronous I/O;<br>
 2.Use KCP as ARQ Protocol;<br>
 3.Simple Session Manage;<br>
-4.two times handshake;<br>
+4.Two times handshake;<br>
