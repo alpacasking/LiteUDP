@@ -2,8 +2,9 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Concurrent;
+using LiteUDP;
 
-namespace LiteUDP
+namespace UDPAsyncServer
 {
     public class UDPAsyncServer
     {
@@ -14,11 +15,14 @@ namespace LiteUDP
         protected ConcurrentQueue<SocketAsyncEventArgs> RecvQueue;
         public Action<byte[]> RecvDataHandler;
 
+        protected  ConcurrentDictionary<uint, KCPClientSession> mSessions;
+
 		public UDPAsyncServer(IPAddress ip, int port, int bufferSize, int maxUserCount)
 		{
 			mServerEndPoint = new IPEndPoint(ip, port);
             mSAEPool = new UDPArgsPool(bufferSize, IOCompleted, maxUserCount / 4, maxUserCount);
             RecvQueue = new ConcurrentQueue<SocketAsyncEventArgs>();
+			mSessions = new ConcurrentDictionary<uint, KCPClientSession>();
 		}
 
 		public virtual void Start()
@@ -42,6 +46,9 @@ namespace LiteUDP
         public virtual void Update()
         {
             ProcessRecvQueue();
+            foreach(var vk in mSessions){
+                vk.Value.Update();
+            }
         }
 
 		private void StartReceiving()
@@ -76,6 +83,7 @@ namespace LiteUDP
 
 		private void ProcessReceive(SocketAsyncEventArgs args)
 		{
+            Console.WriteLine("Packet Receive:" + args.BytesTransferred + " bytes");
 			switch (args.SocketError)
 			{
 				case SocketError.Success:
@@ -99,17 +107,25 @@ namespace LiteUDP
 			StartReceiving();
 		}
 
-        public void Send(byte[] data)
+        public void SendWithSession(KCPClientSession session, byte[] data, int size)
         {
-            var e = mSAEPool.GetObject();
-            //e.RemoteEndPoint = ;
-            Buffer.BlockCopy(data, 0, e.Buffer, 0, data.Length);
-            e.SetBuffer(0, data.Length);
-            mServerSocket.SendToAsync(e);
+			var e = mSAEPool.GetObject();
+            e.RemoteEndPoint = session.ClientEndPoint;
+			Buffer.BlockCopy(data, 0, e.Buffer, 0, size);
+			e.SetBuffer(0, size);
+			mServerSocket.SendToAsync(e);
         }
+
+        public void RecvDataHandlerWithSession(KCPClientSession session, byte[] data, int size)
+        {
+            byte[] newData = new byte[size];
+            Buffer.BlockCopy(data,0,newData,0,size);
+			RecvDataHandler(newData);
+		}
 
 		private void ProcessSend(SocketAsyncEventArgs args)
 		{
+			Console.WriteLine("Packet Send:" + args.BytesTransferred + " bytes");
 			mSAEPool.PutObject(args);
 		}
 
@@ -121,12 +137,41 @@ namespace LiteUDP
                 if(!isSuccess||e == null){
                     continue;
                 }
-                int dataLength = e.BytesTransferred;
-                byte[] data = new byte[dataLength];
-                Buffer.BlockCopy(e.Buffer,e.Offset,data,0,dataLength);
-                RecvDataHandler(data);
-                mSAEPool.PutObject(e);
-            }
+				if (e.BytesTransferred == 0)
+				{
+                    mSAEPool.PutObject(e);
+					continue;
+				}
+                //handshake with {0,0,0,0} at the first
+                if (Helper.IsHandshakeDataRight(e.Buffer, e.Offset, e.BytesTransferred))
+                {
+                    uint conv = (uint)mSessions.Count+1;
+					var newSession = new KCPClientSession(conv);
+                    newSession.ClientEndPoint = e.RemoteEndPoint;
+                    newSession.KCPOutput = SendWithSession;
+                    newSession.RecvDataHandler = RecvDataHandlerWithSession;
+                    mSessions.TryAdd(conv, newSession);
+                    byte[] handshakeRespone = new byte[e.BytesTransferred+4];
+                    Buffer.BlockCopy(e.Buffer,e.Offset,handshakeRespone,0,e.BytesTransferred);
+                    KCP.ikcp_encode32u(handshakeRespone,e.BytesTransferred,conv);
+                    e.SetBuffer(handshakeRespone,0,handshakeRespone.Length);
+                    mServerSocket.SendToAsync(e);
+                    Console.WriteLine("Handshake from:"+e.RemoteEndPoint.ToString());
+                }
+				else
+				{
+                    uint conv = 0;
+					KCP.ikcp_decode32u(e.Buffer, e.Offset, ref conv);
+                    KCPClientSession session = null;
+                    mSessions.TryGetValue(conv, out session);
+					if (session != null)
+					{
+                        session.processRecvQueue(e);
+					}
+                    mSAEPool.PutObject(e);
+				}
+
+			}
         }
     }
 }

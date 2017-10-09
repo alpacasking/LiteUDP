@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPAsyncClient", "UDPAsyncC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPAsyncServer", "UDPAsyncServer\UDPAsyncServer.csproj", "{E452EF29-15A1-49F0-9365-919F0696655E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteUDP", "LiteUDP\LiteUDP.csproj", "{59D74327-DC36-4A14-B81A-A8FE98C26402}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,5 +21,9 @@ Global
 		{E452EF29-15A1-49F0-9365-919F0696655E}.Debug|x86.Build.0 = Debug|x86
 		{E452EF29-15A1-49F0-9365-919F0696655E}.Release|x86.ActiveCfg = Release|x86
 		{E452EF29-15A1-49F0-9365-919F0696655E}.Release|x86.Build.0 = Release|x86
+		{59D74327-DC36-4A14-B81A-A8FE98C26402}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{59D74327-DC36-4A14-B81A-A8FE98C26402}.Debug|x86.Build.0 = Debug|Any CPU
+		{59D74327-DC36-4A14-B81A-A8FE98C26402}.Release|x86.ActiveCfg = Release|Any CPU
+		{59D74327-DC36-4A14-B81A-A8FE98C26402}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

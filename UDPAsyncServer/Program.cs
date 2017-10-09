@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using System.Threading;
 
-namespace LiteUDP
+namespace UDPAsyncServer
 {
     class MainClass
     {
         public static void Main(string[] args)
         {
             IPAddress serverIP = IPAddress.Parse("127.0.0.1");
-            int port = 30019;
+            int port = 30009;
             var server = new TestUDPAsyncServer(serverIP, port, 1024, 10);
             //server.Start();
-			Task task = new Task(() => {
+            Thread workThread = new Thread(() => {
                 while (true)
 				{
                     server.Update();
 				}
 			});
-            task.Start();
+            workThread.Start();
 			string input;
 			do
 			{

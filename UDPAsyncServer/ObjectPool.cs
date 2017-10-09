@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 
-namespace LiteUDP
+namespace UDPAsyncServer
 {
 	public class ObjectPool<T>
 	{

@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 
-namespace LiteUDP
+namespace UDPAsyncServer
 {
     public class TestUDPAsyncServer:UDPAsyncServer
     {

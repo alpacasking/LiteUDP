@@ -36,5 +36,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UDPAsyncClient.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LiteUDP\LiteUDP.csproj">
+      <Project>{59D74327-DC36-4A14-B81A-A8FE98C26402}</Project>
+      <Name>LiteUDP</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
