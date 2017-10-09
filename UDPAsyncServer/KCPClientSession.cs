@@ -13,11 +13,16 @@ namespace UDPAsyncServer
         public Action<KCPClientSession, byte[], int> RecvDataHandler { get; set; }
         private bool mNeedUpdateFlag = false;
         private UInt32 mNextUpdateTime;
+        public ClientStatus Status { get; set; }
 
+        private UInt32 mLastRecvTime;
+        private const UInt32 DEAD_TIMEOUT = 600000;
         public KCPClientSession(uint conv)
         {
             initKCP(conv);
             Conv = conv;
+			Status = ClientStatus.InConnect;
+            mLastRecvTime = Helper.iclock();
         }
 
         void initKCP(UInt32 conv)
@@ -54,6 +59,7 @@ namespace UDPAsyncServer
                 byte[] buffer = new byte[size];
                 if (mKcp.Recv(buffer) > 0)
                 {
+                    mLastRecvTime = Helper.iclock();
                     RecvDataHandler(this, buffer, size);
                 }
             }
@@ -75,5 +81,15 @@ namespace UDPAsyncServer
         {
             initKCP(Conv);
         }
+
+        public bool IsDead()
+        {
+            if(Helper.iclock() - mLastRecvTime > DEAD_TIMEOUT){
+                Status = ClientStatus.Disconnected;
+                return true;
+            }
+            return false;
+        }
+
     }
 }

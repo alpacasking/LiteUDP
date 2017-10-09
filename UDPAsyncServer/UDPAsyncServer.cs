@@ -16,6 +16,7 @@ namespace UDPAsyncServer
         public Action<byte[]> RecvDataHandler;
 
         protected  ConcurrentDictionary<uint, KCPClientSession> mSessions;
+        protected ConcurrentQueue<uint> mDisposeSessionConvs;
 
 		public UDPAsyncServer(IPAddress ip, int port, int bufferSize, int maxUserCount)
 		{
@@ -23,6 +24,7 @@ namespace UDPAsyncServer
             mSAEPool = new UDPArgsPool(bufferSize, IOCompleted, maxUserCount / 4, maxUserCount);
             RecvQueue = new ConcurrentQueue<SocketAsyncEventArgs>();
 			mSessions = new ConcurrentDictionary<uint, KCPClientSession>();
+            mDisposeSessionConvs = new ConcurrentQueue<uint>();
 		}
 
 		public virtual void Start()
@@ -47,7 +49,28 @@ namespace UDPAsyncServer
         {
             ProcessRecvQueue();
             foreach(var vk in mSessions){
-                vk.Value.Update();
+                KCPClientSession session = vk.Value;
+                session.Update();
+                if(session.IsDead()){
+                    mDisposeSessionConvs.Enqueue(session.Conv);
+                }
+            }
+            ProcessDisposeSession();
+        }
+
+        private void ProcessDisposeSession()
+        {
+            while (!mDisposeSessionConvs.IsEmpty)
+            {
+                UInt32 conv = 0;
+                bool isSuccess = mDisposeSessionConvs.TryDequeue(out conv);
+                if (!isSuccess)
+                {
+                    continue;
+                }
+                KCPClientSession tempSession = null;
+                mSessions.TryRemove(conv, out tempSession);
+                Console.WriteLine("Dead Session:"+tempSession.ClientEndPoint.ToString());
             }
         }
 

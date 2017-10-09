@@ -21,24 +21,26 @@ namespace UDPAsyncServer
 			});
             workThread.Start();
 			string input;
-			do
-			{
-				Console.Write("> ");
-				input = Console.ReadLine();
-				switch (input)
-				{
-                    case "start":
-                        server.Start();
-                        break;
-                    case "restart":
-                        server.ReStart();
-                        break;
-					case "stop":           
-						server.Stop();
-						break;
-				}
-			} while (!string.Equals(input, "exit"));
-
+            while(true)
+            {
+                input = Console.ReadLine();
+                if (input == "start")
+                {
+                    server.Start();
+                }
+                else if (input == "restart")
+                {
+                    server.ReStart();
+                }
+                else if (input == "stop")
+                {
+                    server.Stop();
+                }
+                else if (input == "exit")
+                {
+                    break;
+                }
+            }
 		}
     }
 }

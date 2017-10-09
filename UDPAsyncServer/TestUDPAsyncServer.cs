@@ -13,8 +13,7 @@ namespace UDPAsyncServer
         }
 
         public void OnPacket(byte[] data){
-            Console.Write("OnPacket:"+Encoding.UTF8.GetString(data,0,data.Length)+"\n>");
-            //Send(data);
+            Console.WriteLine("Receive:"+Encoding.UTF8.GetString(data));
         }
     }
 }

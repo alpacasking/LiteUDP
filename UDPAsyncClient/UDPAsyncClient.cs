@@ -8,10 +8,8 @@ namespace UDPAsyncClient
 {
     public class UDPAsyncClient
     {
-		// このクラスの有効期間中の各呼び出しに使用される、キャッシュされた Socket オブジェクト。
 		Socket mUDPSocket = null;
 
-		// 非同期ソケット メソッドで使用するデータ バッファーの最大サイズ。
 		private int mBufferSize = 1024;
 		private IPEndPoint mServerEndPoint;
         private SocketAsyncEventArgs mSendSAE;
@@ -24,13 +22,15 @@ namespace UDPAsyncClient
         private bool mNeedUpdateFlag = false;
 		private UInt32 mNextUpdateTime;
 
+        private ClientStatus status = ClientStatus.Disconnected;
+		private UInt32 mConnectStartTime;
+		private UInt32 mLastSendConnectTime;
+
+		private const UInt32 CONNECT_TIMEOUT = 5000;
+		private const UInt32 RESEND_CONNECT = 500;
 
 		public UDPAsyncClient(int bufferSize)
 		{
-			// AddressFamily.InterNetwork - ソケットは IP version 4 アドレス指定方式を
-			// 使用してアドレスを解決する。
-			// SocketType.Dgram - データグラム (メッセージ) パケットをサポートするソケット
-			// PrototcolType.Udp - ユーザー データグラム プロトコル (UDP)
 			mUDPSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             mUDPSocket.Bind(new IPEndPoint(IPAddress.Any,0));
             mBufferSize = bufferSize;
@@ -44,15 +44,12 @@ namespace UDPAsyncClient
             mSendSAE.RemoteEndPoint = mServerEndPoint;
             mSendSAE.SetBuffer(new Byte[mBufferSize], 0, mBufferSize);
 			mSendSAE.Completed += IOCompleted;
-			// SocketAsyncEventArgs コンテキスト オブジェクトを作成する。
 			mReceiveSAE = new SocketAsyncEventArgs();
 			mReceiveSAE.RemoteEndPoint = mServerEndPoint;
-			// データを受信するためのバッファーを設定する。
 			mReceiveSAE.SetBuffer(new Byte[mBufferSize], 0, mBufferSize);
-            // Completed イベントのインライン イベント ハンドラー。
-            // 注: メソッドを自己完結させるため、このイベント ハンドラーはインラインで実装される。
             mReceiveSAE.Completed += IOCompleted;
 
+            mConnectStartTime = Helper.iclock();
 			SendHandshake();
 
 			if (!mUDPSocket.ReceiveFromAsync(mReceiveSAE))
@@ -62,14 +59,13 @@ namespace UDPAsyncClient
 		public void Close()
 		{
 			mUDPSocket.Close();
+            status = ClientStatus.Disconnected;
 		}
 
 		public void RawSend(byte[] data,int size)
 		{
             Buffer.BlockCopy(data, 0, mSendSAE.Buffer, 0, size);
-            // 送信するデータをバッファーに追加する。
 			mSendSAE.SetBuffer(0, size);
-			// ソケットを使用して非同期の送信要求を行う。
 			mUDPSocket.SendToAsync(mSendSAE);
 		}
 
@@ -116,21 +112,65 @@ namespace UDPAsyncClient
             Console.WriteLine("Packet Send:" + args.BytesTransferred + " bytes");
 		}
 
-		public virtual void Update()
-		{
-			ProcessRecvQueue();
-
-            if(mKcp == null ){
-                return;
-            }
-            var current = Helper.iclock();
-			if (mNeedUpdateFlag || current >= mNextUpdateTime)
+        public virtual void Update()
+        {
+			var current = Helper.iclock();
+			switch (status)
             {
-				mKcp.Update(current);
-                mNextUpdateTime = mKcp.Check(current);
-				mNeedUpdateFlag = false;
+                case ClientStatus.InConnect:
+					if (IsConnectTimeout(current))
+					{
+                        status = ClientStatus.Disconnected;
+                        Console.WriteLine("Connect Timeout");
+						return;
+					}
+                    if (IsRehandshake(current))
+					{
+						mLastSendConnectTime = current;
+                        SendHandshake();
+					}
+                    ProcessConnectQueue();
+					break;
+                case ClientStatus.Connected:
+                    ProcessRecvQueue();
+                    if (mKcp == null)
+                    {
+                        return;
+                    }
+                    if (mNeedUpdateFlag || current >= mNextUpdateTime)
+                    {
+                        mKcp.Update(current);
+                        mNextUpdateTime = mKcp.Check(current);
+                        mNeedUpdateFlag = false;
+                    }
+                    break;
+                case ClientStatus.Disconnected:
+                    break;
+            }
+		}
+
+		private void ProcessConnectQueue()
+		{
+            if (!recvQueue.IsEmpty)
+			{
+				byte[] data = null;
+				bool isSuccess = recvQueue.TryDequeue(out data);
+				if (!isSuccess || data == null)
+				{
+					return;
+				}
+
+				if (Helper.IsHandshakeDataRight(data, 0, data.Length))
+				{
+					UInt32 conv = 0;
+					KCP.ikcp_decode32u(data, Helper.HandshakeHeadData.Length, ref conv);
+					init_kcp(conv);
+					status = ClientStatus.Connected;
+					Console.WriteLine("Handshake Success");
+				}
 			}
 		}
+
 
 		private void ProcessRecvQueue()
 		{
@@ -142,14 +182,6 @@ namespace UDPAsyncClient
 				{
 					continue;
 				}
-
-                if(Helper.IsHandshakeDataRight(data, 0, data.Length)){
-                    UInt32 conv = 0;
-                    KCP.ikcp_decode32u(data, Helper.HandshakeHeadData.Length, ref conv);
-                    init_kcp(conv);
-                    Console.WriteLine("Handshake Success");
-                    continue;
-                }
                 mKcp.Input(data);
 				mNeedUpdateFlag = true;
 
@@ -179,7 +211,19 @@ namespace UDPAsyncClient
 
         private void SendHandshake()
         {
+            mLastSendConnectTime = Helper.iclock();
             RawSend(Helper.HandshakeHeadData,Helper.HandshakeHeadData.Length);
+            status = ClientStatus.InConnect;
         }
+
+		private bool IsConnectTimeout(UInt32 current)
+		{
+			return current - mConnectStartTime > CONNECT_TIMEOUT;
+		}
+
+		private bool IsRehandshake(UInt32 current)
+		{
+			return current - mLastSendConnectTime > RESEND_CONNECT;
+		}
 	}
 }

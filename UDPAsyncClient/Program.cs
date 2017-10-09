@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using System.Text;
 
 namespace UDPAsyncClient
@@ -15,7 +15,7 @@ namespace UDPAsyncClient
             client.RecvDataHandler = (data) => {
                 Console.WriteLine(Encoding.UTF8.GetString(data));
             };
-            client.Connect(serverEndPoint);
+            //client.Connect(serverEndPoint);
 
             Thread workThread = new Thread(() => {
 				while (true)
@@ -24,20 +24,31 @@ namespace UDPAsyncClient
 				}
 			});
 			workThread.Start();
-
+			string sendPattern = @"send ?";
 			Console.WriteLine("Enter the message for server");
-
-			string request;
+            string input;
 			while(true)
 			{
-				Console.Write("> ");
-				request = Console.ReadLine();
-                if(request == "exit"){
+				input = Console.ReadLine();
+                if(input == "exit"){
                     break;
                 }
-                byte[] data = Encoding.UTF8.GetBytes(request);
-                client.Send(data);
-			} 
+                else if (input == "connect")
+                {
+                    client.Connect(serverEndPoint);
+                }
+                else if(Regex.IsMatch(input,sendPattern)){
+                    string[] splitInput = input.Split(' ');
+                    string stringData = string.Empty;
+                    for (int i = 1; i < splitInput.Length;i++){
+                        stringData += splitInput[i];
+                    }
+					byte[] data = Encoding.UTF8.GetBytes(stringData);
+					client.Send(data);
+                }
+			
+			}
+
         }
     }
 }
