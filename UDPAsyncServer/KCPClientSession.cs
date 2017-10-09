@@ -34,7 +34,7 @@ namespace UDPAsyncServer
 
         public void Send(byte[] buf)
         {
-            mKcp.Send(buf, buf.Length);
+            mKcp.Send(buf);
             mNeedUpdateFlag = true;
         }
 

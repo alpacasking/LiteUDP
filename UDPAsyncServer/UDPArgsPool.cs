@@ -12,6 +12,7 @@ namespace UDPAsyncServer
         public UDPArgsPool(int bufferSize,EventHandler<SocketAsyncEventArgs> IOCompleted,int initialCount, int maxCapacity)
             :base(maxCapacity)
         {
+            mResetFunc = ResetSocketAsyncEventArgs;
 			mBufferSize = bufferSize;
 			mIOCompleted = IOCompleted;
             mCreateFunc = CreateSAE;
@@ -32,6 +33,11 @@ namespace UDPAsyncServer
 			e.Completed += mIOCompleted;
 			e.AcceptSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 			return e;
+        }
+
+        public void ResetSocketAsyncEventArgs(SocketAsyncEventArgs e)
+        {
+            e.SetBuffer(0,e.Buffer.Length);
         }
     }
 }

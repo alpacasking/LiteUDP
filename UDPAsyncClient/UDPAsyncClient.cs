@@ -42,8 +42,8 @@ namespace UDPAsyncClient
 
 			mSendSAE = new SocketAsyncEventArgs();
             mSendSAE.RemoteEndPoint = mServerEndPoint;
+            mSendSAE.SetBuffer(new Byte[mBufferSize], 0, mBufferSize);
 			mSendSAE.Completed += IOCompleted;
-            SendHandshake();
 			// SocketAsyncEventArgs コンテキスト オブジェクトを作成する。
 			mReceiveSAE = new SocketAsyncEventArgs();
 			mReceiveSAE.RemoteEndPoint = mServerEndPoint;
@@ -52,6 +52,8 @@ namespace UDPAsyncClient
             // Completed イベントのインライン イベント ハンドラー。
             // 注: メソッドを自己完結させるため、このイベント ハンドラーはインラインで実装される。
             mReceiveSAE.Completed += IOCompleted;
+
+			SendHandshake();
 
 			if (!mUDPSocket.ReceiveFromAsync(mReceiveSAE))
 				ProcessReceive(mReceiveSAE);
@@ -64,15 +66,16 @@ namespace UDPAsyncClient
 
 		public void RawSend(byte[] data,int size)
 		{
-			// 送信するデータをバッファーに追加する。
-			mSendSAE.SetBuffer(data, 0, size);
+            Buffer.BlockCopy(data, 0, mSendSAE.Buffer, 0, size);
+            // 送信するデータをバッファーに追加する。
+			mSendSAE.SetBuffer(0, size);
 			// ソケットを使用して非同期の送信要求を行う。
 			mUDPSocket.SendToAsync(mSendSAE);
 		}
 
         public void Send(byte[] data)
         {
-            mKcp.Send(data,data.Length);
+            mKcp.Send(data);
         }
 
 		private void IOCompleted(object sender, SocketAsyncEventArgs args)
@@ -102,12 +105,14 @@ namespace UDPAsyncClient
 					}
                     break;
 			}
-			if (!mUDPSocket.ReceiveFromAsync(mReceiveSAE))
-				ProcessReceive(mReceiveSAE);
+            args.SetBuffer(0,args.Buffer.Length);
+			if (!mUDPSocket.ReceiveFromAsync(args))
+				ProcessReceive(args);
 		}
 
 		private void ProcessSend(SocketAsyncEventArgs args)
 		{
+			args.SetBuffer(0, args.Buffer.Length);
             Console.WriteLine("Packet Send:" + args.BytesTransferred + " bytes");
 		}
 

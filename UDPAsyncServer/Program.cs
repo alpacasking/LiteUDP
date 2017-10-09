@@ -11,7 +11,7 @@ namespace UDPAsyncServer
         {
             IPAddress serverIP = IPAddress.Parse("127.0.0.1");
             int port = 30009;
-            var server = new TestUDPAsyncServer(serverIP, port, 1024, 10);
+            var server = new TestUDPAsyncServer(serverIP, port, 1024, 2000);
             //server.Start();
             Thread workThread = new Thread(() => {
                 while (true)

@@ -151,10 +151,9 @@ namespace UDPAsyncServer
                     newSession.KCPOutput = SendWithSession;
                     newSession.RecvDataHandler = RecvDataHandlerWithSession;
                     mSessions.TryAdd(conv, newSession);
-                    byte[] handshakeRespone = new byte[e.BytesTransferred+4];
-                    Buffer.BlockCopy(e.Buffer,e.Offset,handshakeRespone,0,e.BytesTransferred);
-                    KCP.ikcp_encode32u(handshakeRespone,e.BytesTransferred,conv);
-                    e.SetBuffer(handshakeRespone,0,handshakeRespone.Length);
+ 
+                    KCP.ikcp_encode32u(e.Buffer,e.BytesTransferred,conv);
+                    e.SetBuffer(0,e.BytesTransferred+4);
                     mServerSocket.SendToAsync(e);
                     Console.WriteLine("Handshake from:"+e.RemoteEndPoint.ToString());
                 }
