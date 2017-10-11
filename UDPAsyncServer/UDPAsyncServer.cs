@@ -13,7 +13,7 @@ namespace UDPAsyncServer
 		protected Socket mServerSocket;
         protected UDPArgsPool mSAEPool;
         protected ConcurrentQueue<SocketAsyncEventArgs> RecvQueue;
-        public Action<byte[]> RecvDataHandler;
+        public Action<KCPClientSession,byte[]> RecvDataHandler;
 
         protected  ConcurrentDictionary<uint, KCPClientSession> mSessions;
         protected ConcurrentQueue<uint> mDisposeSessionConvs;
@@ -142,13 +142,6 @@ namespace UDPAsyncServer
 			
         }
 
-        public void RecvDataHandlerWithSession(KCPClientSession session, byte[] data, int size)
-        {
-            byte[] newData = new byte[size];
-            Buffer.BlockCopy(data,0,newData,0,size);
-			RecvDataHandler(newData);
-		}
-
 		private void ProcessSend(SocketAsyncEventArgs args)
 		{
 			Console.WriteLine("Packet Send:" + args.BytesTransferred + " bytes");
@@ -175,7 +168,7 @@ namespace UDPAsyncServer
 					var newSession = new KCPClientSession(conv);
                     newSession.ClientEndPoint = e.RemoteEndPoint;
                     newSession.KCPOutput = SendWithSession;
-                    newSession.RecvDataHandler = RecvDataHandlerWithSession;
+                    newSession.RecvDataHandler = RecvDataHandler;
                     mSessions.TryAdd(conv, newSession);
  
                     KCP.ikcp_encode32u(e.Buffer,e.BytesTransferred,conv);

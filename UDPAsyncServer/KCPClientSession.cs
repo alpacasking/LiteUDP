@@ -10,7 +10,7 @@ namespace UDPAsyncServer
         public EndPoint ClientEndPoint { get; set; }
         private KCP mKcp = null;
         public Action<KCPClientSession, byte[], int> KCPOutput { get; set; }
-        public Action<KCPClientSession, byte[], int> RecvDataHandler { get; set; }
+        public Action<KCPClientSession, byte[]> RecvDataHandler { get; set; }
         private bool mNeedUpdateFlag = false;
         private UInt32 mNextUpdateTime;
         public ClientStatus Status { get; set; }
@@ -60,7 +60,7 @@ namespace UDPAsyncServer
                 if (mKcp.Recv(buffer) > 0)
                 {
                     mLastRecvTime = Helper.iclock();
-                    RecvDataHandler(this, buffer, size);
+                    RecvDataHandler(this, buffer);
                 }
             }
         }

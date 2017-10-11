@@ -12,8 +12,9 @@ namespace UDPAsyncServer
             RecvDataHandler = OnPacket;
         }
 
-        public void OnPacket(byte[] data){
+        public void OnPacket(KCPClientSession session,byte[] data){
             Console.WriteLine("Receive:"+Encoding.UTF8.GetString(data));
+            session.Send(data);
         }
     }
 }

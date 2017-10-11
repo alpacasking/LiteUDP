@@ -48,7 +48,7 @@ namespace UDPAsyncClient
 			mReceiveSAE.RemoteEndPoint = mServerEndPoint;
 			mReceiveSAE.SetBuffer(new Byte[mBufferSize], 0, mBufferSize);
             mReceiveSAE.Completed += IOCompleted;
-
+            mNextUpdateTime = Helper.iclock();
             mConnectStartTime = Helper.iclock();
 			SendHandshake();
 
@@ -74,6 +74,7 @@ namespace UDPAsyncClient
         public void Send(byte[] data)
         {
             mKcp.Send(data);
+            mNeedUpdateFlag = true;
         }
 
 		private void IOCompleted(object sender, SocketAsyncEventArgs args)
@@ -110,7 +111,6 @@ namespace UDPAsyncClient
 
 		private void ProcessSend(SocketAsyncEventArgs args)
 		{
-			args.SetBuffer(0, args.Buffer.Length);
             Console.WriteLine("Packet Send:" + args.BytesTransferred + " bytes");
 		}
 

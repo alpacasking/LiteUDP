@@ -11,7 +11,7 @@ namespace UDPAsyncClient
         public static void Main(string[] args)
         {
             var serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 30009);
-            var client = new UDPAsyncClient(1024);
+            var client = new TestUDPAsyncClient(1024);
             client.RecvDataHandler = (data) => {
                 Console.WriteLine(Encoding.UTF8.GetString(data));
             };
@@ -26,6 +26,7 @@ namespace UDPAsyncClient
 			});
 			workThread.Start();
 			string sendPattern = @"send ?";
+            string sendLoopPattern = @"loop ?";
 			Console.WriteLine("Enter the message for server");
             string input;
 			while(true)
@@ -44,9 +45,18 @@ namespace UDPAsyncClient
                     for (int i = 1; i < splitInput.Length;i++){
                         stringData += splitInput[i];
                     }
-					byte[] data = Encoding.UTF8.GetBytes(stringData);
-					client.Send(data);
+					client.Send(stringData);
                 }
+				else if (Regex.IsMatch(input, sendLoopPattern))
+				{
+					string[] splitInput = input.Split(' ');
+					string stringData = string.Empty;
+					for (int i = 1; i < splitInput.Length; i++)
+					{
+						stringData += splitInput[i];
+					}
+					client.SendLoop(stringData);
+				}
 			
 			}
 
