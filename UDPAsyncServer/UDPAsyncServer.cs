@@ -136,7 +136,10 @@ namespace UDPAsyncServer
             e.RemoteEndPoint = session.ClientEndPoint;
 			Buffer.BlockCopy(data, 0, e.Buffer, 0, size);
 			e.SetBuffer(0, size);
-			mServerSocket.SendToAsync(e);
+            if(!mServerSocket.SendToAsync(e)){
+                ProcessSend(e);
+            }
+			
         }
 
         public void RecvDataHandlerWithSession(KCPClientSession session, byte[] data, int size)
@@ -177,7 +180,9 @@ namespace UDPAsyncServer
  
                     KCP.ikcp_encode32u(e.Buffer,e.BytesTransferred,conv);
                     e.SetBuffer(0,e.BytesTransferred+4);
-                    mServerSocket.SendToAsync(e);
+                    if(!mServerSocket.SendToAsync(e)){
+                        ProcessSend(e);
+                    }
                     Console.WriteLine("Handshake from:"+e.RemoteEndPoint.ToString());
                 }
 				else

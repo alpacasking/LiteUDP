@@ -31,7 +31,6 @@ namespace UDPAsyncServer
 			e.RemoteEndPoint = new IPEndPoint(0L, 0);
 			e.SetBuffer(new byte[mBufferSize], 0, mBufferSize);
 			e.Completed += mIOCompleted;
-			e.AcceptSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 			return e;
         }
 

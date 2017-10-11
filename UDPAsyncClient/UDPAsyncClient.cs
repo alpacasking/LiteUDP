@@ -66,7 +66,9 @@ namespace UDPAsyncClient
 		{
             Buffer.BlockCopy(data, 0, mSendSAE.Buffer, 0, size);
 			mSendSAE.SetBuffer(0, size);
-			mUDPSocket.SendToAsync(mSendSAE);
+            if(!mUDPSocket.SendToAsync(mSendSAE)){
+                ProcessSend(mSendSAE);
+            }
 		}
 
         public void Send(byte[] data)
@@ -206,7 +208,7 @@ namespace UDPAsyncClient
 
 			// fast mode.
 			mKcp.NoDelay(1, 10, 2, 1);
-			mKcp.WndSize(128, 128);
+            mKcp.WndSize(128, 128);
 		}
 
         private void SendHandshake()

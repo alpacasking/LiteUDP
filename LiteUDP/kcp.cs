@@ -401,9 +401,13 @@ namespace LiteUDP
                     snd_buf = append<Segment>(slice<Segment>(snd_buf, 0, index), slice<Segment>(snd_buf, index + 1, snd_buf.Length));
                     break;
                 }
-                else
+                //else
+                //{
+                //    seg.fastack++;
+                //}
+                if (_itimediff(sn, seg.sn) < 0)
                 {
-                    seg.fastack++;
+                    break;
                 }
 
                 index++;
@@ -422,6 +426,24 @@ namespace LiteUDP
             }
 
             if (0 < count) snd_buf = slice<Segment>(snd_buf, count, snd_buf.Length);
+        }
+
+        void parse_fastack(UInt32 sn)
+        {
+            if (_itimediff(sn, snd_una) < 0 || _itimediff(sn, snd_nxt) >= 0)
+                return;
+
+            foreach (var seg in snd_buf)
+            {
+                if (_itimediff(sn, seg.sn) < 0)
+                {
+                    break;
+                }
+                else if (sn != seg.sn)
+                {
+                    seg.fastack++;
+                }
+            }
         }
 
         void ack_push(UInt32 sn, UInt32 ts)
@@ -496,6 +518,9 @@ namespace LiteUDP
             var s_una = snd_una;
             if (data.Length < IKCP_OVERHEAD) return 0;
 
+            UInt32 maxack = 0;
+            int flag = 0;
+
             var offset = 0;
 
             while (true)
@@ -550,6 +575,19 @@ namespace LiteUDP
                     }
                     parse_ack(sn);
                     shrink_buf();
+
+                    if (flag == 0)
+                    {
+                        flag = 1;
+                        maxack = sn;
+                    }
+                    else
+                    {
+                        if (_itimediff(sn, maxack) > 0)
+                        {
+                            maxack = sn;
+                        }
+                    }
                 }
                 else if (IKCP_CMD_PUSH == cmd)
                 {
@@ -589,6 +627,11 @@ namespace LiteUDP
                 }
 
                 offset += (int)length;
+            }
+
+            if (flag != 0)
+            {
+                parse_fastack(maxack);
             }
 
             if (_itimediff(snd_una, s_una) > 0)
@@ -780,7 +823,7 @@ namespace LiteUDP
                     segment.una = rcv_nxt;
 
                     var need = IKCP_OVERHEAD + segment.data.Length;
-                    if (offset + need > mtu)
+                    if (offset + need >= mtu)
                     {
                         output(buffer, offset);
                         //Array.Clear(buffer, 0, offset);
