@@ -10,6 +10,7 @@ You can just download the source code and complie it,then input any string you l
 1.Client Command<br>
 connect:connect to server<br>
 send "anything you like":send message to server<br>
+loop "anything you like":send message to server,1 time per 10ms<br>
 exit:shutdown client<br>
 2.Server Command<br>
 start:start the server<br>
