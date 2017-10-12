@@ -50,7 +50,9 @@ namespace UDPAsyncServer
 
         public void processRecvQueue(SocketAsyncEventArgs e)
         {
-            mKcp.Input(e.Buffer);
+            byte[] realData = new byte[e.BytesTransferred];
+            Buffer.BlockCopy(e.Buffer,0,realData,0,e.BytesTransferred);
+            mKcp.Input(realData);
 
             mNeedUpdateFlag = true;
 

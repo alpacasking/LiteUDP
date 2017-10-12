@@ -11,6 +11,7 @@ namespace UDPAsyncClient
         }
 
         public void Send(string data){
+            Console.WriteLine("data byte length:"+Encoding.UTF8.GetBytes(data).Length);
             base.Send(Encoding.UTF8.GetBytes(data));
         }
 
