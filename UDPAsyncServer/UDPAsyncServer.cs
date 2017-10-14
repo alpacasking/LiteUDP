@@ -164,7 +164,7 @@ namespace UDPAsyncServer
                 //handshake with {0,0,0,0} at the first
                 if (Helper.IsHandshakeDataRight(e.Buffer, e.Offset, e.BytesTransferred))
                 {
-                    uint conv = (uint)mSessions.Count+1;
+                    uint conv = Helper.iclock();
 					var newSession = new KCPClientSession(conv);
                     newSession.ClientEndPoint = e.RemoteEndPoint;
                     newSession.KCPOutput = SendWithSession;
