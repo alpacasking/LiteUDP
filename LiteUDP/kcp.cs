@@ -20,11 +20,11 @@ namespace LiteUDP
         public const int IKCP_ASK_TELL = 2;  // need to send IKCP_CMD_WINS
         public const int IKCP_WND_SND = 32;
         public const int IKCP_WND_RCV = 32;
-        public const int IKCP_MTU_DEF = 1400;
+        public const int IKCP_MTU_DEF = 512;
         public const int IKCP_ACK_FAST = 3;
         public const int IKCP_INTERVAL = 100;
         public const int IKCP_OVERHEAD = 24;
-        public const int IKCP_DEADLINK = 10;
+        public const int IKCP_DEADLINK = 20;
         public const int IKCP_THRESH_INIT = 2;
         public const int IKCP_THRESH_MIN = 2;
         public const int IKCP_PROBE_INIT = 7000;   // 7 secs to probe window size

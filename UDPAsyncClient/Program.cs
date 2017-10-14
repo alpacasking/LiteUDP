@@ -20,7 +20,7 @@ namespace UDPAsyncClient
             Thread workThread = new Thread(() => {
 				while (true)
 				{
-                    Thread.Sleep(0);
+                    Thread.Sleep(1);
 					client.Update();
 				}
 			});

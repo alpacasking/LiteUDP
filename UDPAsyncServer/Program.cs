@@ -16,7 +16,7 @@ namespace UDPAsyncServer
             Thread workThread = new Thread(() => {
                 while (true)
 				{
-                    Thread.Sleep(0);
+                    Thread.Sleep(1);
                     server.Update();
 				}
 			});

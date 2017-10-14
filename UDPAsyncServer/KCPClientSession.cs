@@ -12,7 +12,7 @@ namespace UDPAsyncServer
         public Action<KCPClientSession, byte[], int> KCPOutput { get; set; }
         public Action<KCPClientSession, byte[]> RecvDataHandler { get; set; }
         private bool mNeedUpdateFlag = false;
-        private UInt32 mNextUpdateTime;
+        private UInt32 mNextUpdateTime = 0;
         public ClientStatus Status { get; set; }
 
         private UInt32 mLastRecvTime;

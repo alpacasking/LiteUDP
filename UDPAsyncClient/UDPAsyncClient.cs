@@ -20,7 +20,7 @@ namespace UDPAsyncClient
 
         private KCP mKcp;
         private bool mNeedUpdateFlag = false;
-		private UInt32 mNextUpdateTime;
+		private UInt32 mNextUpdateTime = 0;
 
         private ClientStatus status = ClientStatus.Disconnected;
 		private UInt32 mConnectStartTime;
@@ -64,10 +64,14 @@ namespace UDPAsyncClient
 
 		public void RawSend(byte[] data,int size)
 		{
-            Buffer.BlockCopy(data, 0, mSendSAE.Buffer, 0, size);
-			mSendSAE.SetBuffer(0, size);
-            if(!mUDPSocket.SendToAsync(mSendSAE)){
-                ProcessSend(mSendSAE);
+            lock (mSendSAE)
+            {
+                Buffer.BlockCopy(data, 0, mSendSAE.Buffer, 0, size);
+                mSendSAE.SetBuffer(0, size);
+                if (!mUDPSocket.SendToAsync(mSendSAE))
+                {
+                    ProcessSend(mSendSAE);
+                }
             }
 		}
 
@@ -99,7 +103,7 @@ namespace UDPAsyncClient
 					if (args.BytesTransferred > 0)
 					{
                         byte[] data = new byte[args.BytesTransferred];
-                        Buffer.BlockCopy(args.Buffer,args.Offset,data,0,args.BytesTransferred);
+                        Buffer.BlockCopy(args.Buffer,0,data,0,args.BytesTransferred);
                         recvQueue.Enqueue(data);
 					}
                     break;
